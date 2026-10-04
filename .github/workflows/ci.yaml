@@ -33,7 +33,7 @@ jobs:
       - name: Scan image for critical vulnerabilities
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-            age-ref: devops-api:ci
+          image-ref: devops-api:ci
           severity: CRITICAL
           ignore-unfixed: true
           exit-code: '1'
@@ -41,9 +41,10 @@ jobs:
     if: github.event_name == 'push'
     needs: test
     runs-on: ubuntu-latest
-    permissio s:
+    permissions:
       contents: read
-                            eps:
+      packages: write
+    steps:
       - uses: actions/checkout@v7
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
