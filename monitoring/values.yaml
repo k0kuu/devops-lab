@@ -1,0 +1,42 @@
+grafana:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 1Gi
+alertmanager:
+  enabled: true
+nodeExporter:
+  enabled: true
+# Docker driver на macOS: корінь ФС вузла не є shared mount. Без цього pod node-exporter
+# падає з помилкою "path / is mounted on / but it is not a shared or slave mount".
+prometheus-node-exporter:
+  hostRootFsMount:
+    enabled: false
+kubeStateMetrics:
+  enabled: true
+prometheus:
+  prometheusSpec:
+    retention: 2d
+    resources:
+      requests: {cpu: 100m, memory: 256Mi}
+      limits: {memory: 1Gi}
+    serviceMonitorSelector:
+      matchLabels:
+        release: monitoring
+    serviceMonitorNamespaceSelector: {}
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: [ReadWriteOnce]
+          resources:
+            requests:
+              storage: 2Gi
+# Частина control-plane endpoints у локальному Minikube не експонується.
+kubeEtcd:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false

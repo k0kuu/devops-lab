@@ -1,0 +1,62 @@
+name: test-and-publish
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: lab
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: lab
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U lab -d lab"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://lab:ci-only-password@localhost:5432/lab
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: pip install -r app/requirements.txt pytest==8.3.5 httpx==0.28.1
+      - run: python app/migrate.py
+      - run: PYTHONPATH=app pytest -q tests
+      - run: docker build -t devops-api:ci .
+      - name: Scan image for critical vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+            age-ref: devops-api:ci
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+  publish:
+    if: github.event_name == 'push'
+    needs: test
+    runs-on: ubuntu-latest
+    permissio s:
+      contents: read
+                            eps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Lowercase registry path
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ env.IMAGE }}:${{ github.sha }}
