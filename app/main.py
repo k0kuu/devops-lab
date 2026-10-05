@@ -10,7 +10,7 @@ from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, ge
 from psycopg.rows import dict_row
 from pydantic import BaseModel, Field
 
-app = FastAPI(title="DevOps Lab")
+app = FastAPI(title="DevOps Lab v2")
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 requests_total = Counter("lab_http_requests_total", "HTTP requests", ["method", "route", "status"])
 latency = Histogram("lab_http_request_duration_seconds", "HTTP latency", ["route"])
