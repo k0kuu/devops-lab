@@ -1,0 +1,10 @@
+replicaCount: 2
+appVersion: v1
+image:
+  repository: devops-api
+  tag: v1
+serviceMonitor:
+  enabled: false
+ingress:
+  enabled: false
+  host: api.lab.local

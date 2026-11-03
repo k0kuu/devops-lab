@@ -1,0 +1,35 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: devops-lab
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  groups:
+    - name: devops-lab
+      rules:
+        - alert: LabHighErrorRate
+          expr: |
+            sum(rate(lab_http_requests_total{namespace="lab-helm",status=~"5.."}[2m]))
+            / clamp_min(sum(rate(lab_http_requests_total{namespace="lab-helm"}[2m])), 0.001) > 0.05
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: API has more than 5 percent server errors
+            description: Check API logs and recent changes; /fail is the lab fault injection endpoint.
+        - alert: LabApiUnavailable
+          expr: kube_deployment_status_replicas_available{namespace="lab-helm",deployment="api"} < 1
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: No available API replicas
+        - alert: LabApiScrapeMissing
+          expr: absent(up{namespace="lab-helm",service="api"}) or max(up{namespace="lab-helm",service="api"}) == 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: No healthy API scrape targets

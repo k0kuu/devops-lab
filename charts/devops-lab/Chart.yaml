@@ -1,0 +1,6 @@
+apiVersion: v2
+name: devops-lab
+description: API and PostgreSQL for a local DevOps laboratory
+type: application
+version: 0.1.0
+appVersion: v1
